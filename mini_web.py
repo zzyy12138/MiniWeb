@@ -48,6 +48,7 @@ def route(url_address):  # url_address表示页面的路径
 
     return set_fun
 
+
 #################################################上面是框架部分#############################################
 
 # 一个功能一个函数 ,一个页面一个函数
@@ -227,3 +228,66 @@ def del_method(match):
     conn.close()
 
     return "删除成功"
+
+
+# 更新界面展示
+@route("/update/(\d+).html")
+def update_page(match):
+    # 展示更新的界面
+    with open("./templates/update.html") as f:
+        content = f.read()
+
+    # 替换我们的code
+    code = match.group(1)
+    # code替换
+    content_new = re.sub(r"\{%code%\}", code, content)
+
+    # 得到备注的信息
+    # 通过 数据 库拿到
+    # 连接数据库
+    # 创建Connection连接
+    conn = connect(host='localhost', port=3306, database='stock_db', user='root', password='mysql', charset='utf8')
+    # 获得Cursor对象
+    cs1 = conn.cursor()
+
+    # 执行sql语句
+    sql = """select note_info from focus where info_id = (select id from info where code = %s);"""
+    cs1.execute(sql, (code,))
+
+    rows_data = cs1.fetchall()
+    print(rows_data[0][0])  # (('23234234',),)
+
+    # 替换备注的信息
+    content_new_2 = re.sub(r'\{%note_info%\}', rows_data[0][0], content_new)
+
+    return content_new_2
+
+
+# 更新界面内容
+# 让所有的更新都到这个方法 中
+@route(r'/update/(\d+)/(.*)\.html')
+def update_data(match):
+    # 得到code
+    code = match.group(1)
+    # 内容
+    # 解码内容
+    note = unquote(match.group(2))
+
+    print(code, "---->", note)
+
+    # 操作数据库更新数据
+    # 连接
+    # 创建Connection连接
+    conn = connect(host='localhost', port=3306, database='stock_db', user='root', password='mysql', charset='utf8')
+    # 获得Cursor对象
+    cs1 = conn.cursor()
+
+    # 执行sql
+    sql = """ update focus set note_info = %s where info_id = (select id from info where code = %s);"""
+    cs1.execute(sql, (note, code))
+
+    # 提交
+    conn.commit()
+    # 关闭
+    cs1.close()
+    conn.close()
