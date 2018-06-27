@@ -291,3 +291,5 @@ def update_data(match):
     # 关闭
     cs1.close()
     conn.close()
+
+    return "更新成功"
